@@ -2,6 +2,26 @@
 
 Expo app UI plus a small Node.js Express API for generating kids stories with OpenAI.
 
+## Structure
+
+```text
+.
+|-- App.js
+|-- app.json
+|-- server.mjs
+|-- src
+|   |-- api
+|   |   |-- config.mjs
+|   |   |-- createApi.mjs
+|   |   |-- routes
+|   |   |   `-- storyRoutes.mjs
+|   |   `-- services
+|   |       `-- storyService.mjs
+|   `-- app
+|       `-- StoryBuddyApp.js
+`-- README.md
+```
+
 ## API
 
 The backend exposes:

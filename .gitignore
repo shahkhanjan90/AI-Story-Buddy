@@ -7,3 +7,5 @@ yarn-error.log*
 dist/
 web-build/
 .env
+.api-*.log
+.expo-*.log
