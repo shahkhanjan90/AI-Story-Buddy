@@ -1,0 +1,24 @@
+The following packages should be updated for best compatibility with the installed expo version:
+  react-native@0.79.1 - expected version: 0.79.6
+Your project may not work correctly until you install the expected versions of the packages.
+C:\Users\shahk\Development\AI Story Buddy\AI-Story-Buddy\node_modules\@expo\cli\build\src\utils\errors.js:130
+    throw error;
+    ^
+
+Error: ENOENT: no such file or directory, watch 'C:\Users\shahk\Development\AI Story Buddy\AI-Story-Buddy\node_modules\@react-native\codegen\node_modules\hermes-estree'
+    at FSWatcher.<computed> (node:internal/fs/watchers:316:19)
+    at Object.watch (node:fs:2537:36)
+    at FallbackWatcher._watchdir (C:\Users\shahk\Development\AI Story Buddy\AI-Story-Buddy\node_modules\metro-file-map\src\watchers\FallbackWatcher.js:88:24)
+    at C:\Users\shahk\Development\AI Story Buddy\AI-Story-Buddy\node_modules\metro-file-map\src\watchers\FallbackWatcher.js:185:22
+    at Walker.<anonymous> (C:\Users\shahk\Development\AI Story Buddy\AI-Story-Buddy\node_modules\metro-file-map\src\watchers\FallbackWatcher.js:322:31)
+    at Walker.emit (node:events:508:28)
+    at C:\Users\shahk\Development\AI Story Buddy\AI-Story-Buddy\node_modules\walker\lib\walker.js:69:16
+    at FSReqCallback.oncomplete (node:fs:185:23) {
+  errno: -4058,
+  syscall: 'watch',
+  code: 'ENOENT',
+  path: 'C:\\Users\\shahk\\Development\\AI Story Buddy\\AI-Story-Buddy\\node_modules\\@react-native\\codegen\\node_modules\\hermes-estree',
+  filename: 'C:\\Users\\shahk\\Development\\AI Story Buddy\\AI-Story-Buddy\\node_modules\\@react-native\\codegen\\node_modules\\hermes-estree'
+}
+
+Node.js v24.14.0
