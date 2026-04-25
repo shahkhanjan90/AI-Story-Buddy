@@ -77,6 +77,10 @@ GET http://localhost:3000/health
 npm start
 ```
 
+The app calls `POST /generate-story` from the Story API. By default the UI points to
+`http://localhost:3000`, and you can edit that in the app. When testing from Expo Go on a
+physical phone, replace `localhost` with your computer's local network IP.
+
 ## Run Web
 
 ```bash

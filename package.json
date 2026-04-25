@@ -14,7 +14,7 @@
     "@expo/metro-runtime": "~6.1.2",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
-    "expo": "^54.0.0",
+    "expo": "^55.0.17",
     "expo-status-bar": "~3.0.9",
     "express": "^5.2.1",
     "openai": "^6.34.0",

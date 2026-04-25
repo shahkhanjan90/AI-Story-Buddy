@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import {
   Alert,
+  ActivityIndicator,
+  Platform,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -30,30 +32,76 @@ const AGE_GROUPS = [
   },
 ];
 
-const STORY_TEMPLATES = {
-  '2-4': ({ character }) =>
-    `${character} found a tiny golden star sleeping in the grass. Together they tiptoed through a bright garden, helping a sleepy bee, a shy bunny, and a giggling cloud. When the moon peeked out, the star glowed warmly and thanked ${character} for being gentle and kind. They both yawned, smiled, and headed home for the coziest bedtime ever.`,
-  '5-7': ({ character }) =>
-    `One sunny morning, ${character} discovered a rainbow map tucked inside a library book. The map led to a whispering tree that had forgotten its song. ${character} followed sparkling clues, crossed a pebble stream, and asked a cheerful robin for help. With bravery and a little singing, the tree remembered its melody, and the whole forest danced in thanks.`,
-  '8-10': ({ character }) =>
-    `${character} was not expecting to become the guardian of Moonlight Hill before lunch, but adventure rarely sends a warning. After an old compass flashed silver, ${character} followed its signal into hidden tunnels beneath the town. There, three glowing doors tested courage, kindness, and curiosity. By choosing wisely, ${character} restored the hill's lost lantern and filled the night sky with stories once more.`,
-};
+const DEFAULT_API_BASE_URL =
+  Platform.OS === 'web' ? 'http://localhost:3000' : 'http://localhost:3000';
 
 export default function StoryBuddyApp() {
   const [selectedAge, setSelectedAge] = useState('5-7');
   const [character, setCharacter] = useState('');
+  const [theme, setTheme] = useState('');
+  const [apiBaseUrl, setApiBaseUrl] = useState(DEFAULT_API_BASE_URL);
+  const [storyTitle, setStoryTitle] = useState('');
   const [story, setStory] = useState('');
+  const [moral, setMoral] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const handleGenerateStory = () => {
+  const handleGenerateStory = async () => {
     const cleanedName = character.trim();
+    const cleanedTheme = theme.trim();
+    const cleanedApiBaseUrl = apiBaseUrl.trim().replace(/\/$/, '');
 
     if (!cleanedName) {
       Alert.alert('Character needed', 'Please enter a character name before generating a story.');
       return;
     }
 
-    const template = STORY_TEMPLATES[selectedAge];
-    setStory(template({ character: cleanedName }));
+    if (!cleanedTheme) {
+      Alert.alert('Theme needed', 'Please enter a story theme before generating a story.');
+      return;
+    }
+
+    if (!cleanedApiBaseUrl) {
+      Alert.alert('API URL needed', 'Please enter the Story API base URL.');
+      return;
+    }
+
+    setIsLoading(true);
+    setErrorMessage('');
+
+    try {
+      const response = await fetch(`${cleanedApiBaseUrl}/generate-story`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          age: selectedAge,
+          characters: cleanedName,
+          theme: cleanedTheme,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate story.');
+      }
+
+      setStoryTitle(data.title || 'Untitled Story');
+      setStory(data.story || '');
+      setMoral(data.moral || '');
+    } catch (error) {
+      setStoryTitle('');
+      setStory('');
+      setMoral('');
+      setErrorMessage(
+        error.message ||
+          'Could not reach the story API. If you are using a real device, replace localhost with your computer IP.'
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handlePlayAudio = () => {
@@ -121,8 +169,39 @@ export default function StoryBuddyApp() {
           />
         </View>
 
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Theme</Text>
+          <TextInput
+            value={theme}
+            onChangeText={setTheme}
+            placeholder="Enter a theme like friendship or bedtime adventure"
+            placeholderTextColor="#8b8197"
+            style={styles.input}
+          />
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Story API URL</Text>
+          <TextInput
+            value={apiBaseUrl}
+            onChangeText={setApiBaseUrl}
+            autoCapitalize="none"
+            autoCorrect={false}
+            placeholder="http://localhost:3000"
+            placeholderTextColor="#8b8197"
+            style={styles.input}
+          />
+          <Text style={styles.helperText}>
+            Use your computer&apos;s IP instead of `localhost` when testing from Expo Go on a phone.
+          </Text>
+        </View>
+
         <Pressable style={styles.primaryButton} onPress={handleGenerateStory}>
-          <Text style={styles.primaryButtonText}>Generate Story</Text>
+          {isLoading ? (
+            <ActivityIndicator color="#fff8f2" />
+          ) : (
+            <Text style={styles.primaryButtonText}>Generate Story</Text>
+          )}
         </Pressable>
 
         <View style={styles.storyCard}>
@@ -131,10 +210,21 @@ export default function StoryBuddyApp() {
             <Text style={styles.storyTag}>{selectedAge} years</Text>
           </View>
 
+          {storyTitle ? <Text style={styles.storyTitle}>{storyTitle}</Text> : null}
+
           <Text style={styles.storyText}>
             {story ||
-              'Your generated story will appear here. Pick an age range, type a character, and tap Generate Story.'}
+              'Your generated story will appear here. Pick an age range, add characters and a theme, then tap Generate Story.'}
           </Text>
+
+          {moral ? (
+            <View style={styles.moralCard}>
+              <Text style={styles.moralLabel}>Moral</Text>
+              <Text style={styles.moralText}>{moral}</Text>
+            </View>
+          ) : null}
+
+          {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
         </View>
 
         <Pressable
@@ -256,6 +346,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#2f2340',
   },
+  helperText: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#6b5d78',
+  },
   primaryButton: {
     backgroundColor: '#ca6a2a',
     borderRadius: 18,
@@ -300,6 +395,34 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 27,
     color: '#4f435d',
+  },
+  storyTitle: {
+    fontSize: 20,
+    lineHeight: 26,
+    fontWeight: '800',
+    color: '#2f2340',
+  },
+  moralCard: {
+    backgroundColor: '#f7ebd9',
+    borderRadius: 18,
+    padding: 14,
+    gap: 6,
+  },
+  moralLabel: {
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+    color: '#b06033',
+  },
+  moralText: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: '#5b4d64',
+  },
+  errorText: {
+    fontSize: 14,
+    lineHeight: 21,
+    color: '#b13b2d',
   },
   secondaryButton: {
     backgroundColor: '#2f2340',
