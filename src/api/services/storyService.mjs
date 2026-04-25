@@ -1,6 +1,10 @@
 import OpenAI from 'openai';
 import { apiConfig } from '../config.mjs';
 
+function stripCodeFences(value) {
+  return value.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/, '').trim();
+}
+
 export async function generateStory({ age, characters, theme }) {
   if (!apiConfig.openAiApiKey || apiConfig.openAiApiKey === 'your_openai_api_key_here') {
     const error = new Error(
@@ -56,7 +60,7 @@ Requirements:
   }
 
   try {
-    const parsed = JSON.parse(rawText);
+    const parsed = JSON.parse(stripCodeFences(rawText));
 
     return {
       title: parsed.title ?? 'Untitled Story',
