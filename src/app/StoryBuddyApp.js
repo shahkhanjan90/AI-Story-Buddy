@@ -10,6 +10,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
@@ -26,7 +27,34 @@ import {
 const DEFAULT_API_BASE_URL =
   Platform.OS === 'web' ? 'http://localhost:3000' : 'http://localhost:3000';
 
+function getThemeVisual(themeId) {
+  const visuals = {
+    adventure: { icon: '🧭', border: '#9d4edd', tint: '#f8f0ff' },
+    emotional: { icon: '🤎', border: '#b08968', tint: '#f8efe8' },
+    educational: { icon: '📚', border: '#5c7cfa', tint: '#eef2ff' },
+  };
+
+  return visuals[themeId] || visuals.adventure;
+}
+
+function getThemeOptionDetails(option) {
+  const details = {
+    'Treasure hunt': { icon: '🗺️', description: 'Finding hidden gems in mysterious places' },
+    'Space mission': { icon: '🚀', description: 'Rocketing to the moon and beyond' },
+    'Jungle journey': { icon: '🌴', description: 'Swing through vines and meet wild friends' },
+    'Overcoming fear': { icon: '🛡️', description: 'Being brave when things feel scary' },
+    'Making friends': { icon: '🤝', description: 'Finding connection and kindness' },
+    'Dealing with mistakes': { icon: '🧩', description: 'Learning and growing from small mistakes' },
+    Numbers: { icon: '🔢', description: 'Counting, patterns, and number fun' },
+    Nature: { icon: '🌿', description: 'Exploring plants, animals, and the outdoors' },
+    'Science basics': { icon: '🔬', description: 'Simple science ideas and curious discoveries' },
+  };
+
+  return details[option] || { icon: '✨', description: 'A magical story path' };
+}
+
 export default function StoryBuddyApp() {
+  const { width } = useWindowDimensions();
   const [selectedAge, setSelectedAge] = useState('5-7');
   const [selectedCharacters, setSelectedCharacters] = useState([]);
   const [customCharacter, setCustomCharacter] = useState('');
@@ -42,12 +70,22 @@ export default function StoryBuddyApp() {
   const [moral, setMoral] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [showResultSection, setShowResultSection] = useState(false);
 
   const visibleCharacters =
     CHARACTER_CATEGORIES.find((category) => category.id === selectedCharacterCategory)?.byAge[
       selectedAge
     ] || [];
   const visibleMoralOptions = MORAL_OPTIONS_BY_AGE[selectedAge];
+  const isDesktop = width >= 960;
+  const contentWidth = Math.min(width - 20, 980);
+  const canCreateMagic =
+    selectedAge &&
+    (selectedCharacters.length > 0 || customCharacter.trim().length > 0) &&
+    (selectedMoral || customMoral.trim()) &&
+    selectedThemeCategory &&
+    selectedThemeOption &&
+    selectedTone;
 
   const handleAgeSelect = (ageId) => {
     setSelectedAge(ageId);
@@ -75,6 +113,7 @@ export default function StoryBuddyApp() {
   };
 
   const handleGenerateStory = async () => {
+    setShowResultSection(true);
     await generateStory();
   };
 
@@ -153,6 +192,7 @@ export default function StoryBuddyApp() {
   };
 
   const handleSurpriseMe = async () => {
+    setShowResultSection(true);
     const availableCharacters = getCharacterEntriesForAge(selectedAge);
 
     if (availableCharacters.length < 3) {
@@ -208,26 +248,40 @@ export default function StoryBuddyApp() {
       <ExpoStatusBar style="dark" />
       <StatusBar barStyle="dark-content" />
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.heroCard}>
-          <View style={styles.heroBadge}>
-            <Text style={styles.eyebrow}>AI STORY BUDDY</Text>
+      <View style={styles.topBar}>
+        <Text style={styles.topBarBrand}>Magic Lab</Text>
+        <View style={styles.topBarAvatar}>
+          <Text style={styles.topBarAvatarText}>🧒</Text>
+        </View>
+      </View>
+
+      <ScrollView
+        contentContainerStyle={[styles.content, { alignItems: 'center' }]}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={[styles.pageShell, { width: contentWidth }]}>
+        <View style={styles.heroIntro}>
+          <View style={styles.heroIntroHeader}>
+            <View>
+              <Text style={styles.title}>Creation Station</Text>
+              <Text style={styles.description}>Let&apos;s mix some magic into your story!</Text>
+            </View>
           </View>
-          <Text style={styles.title}>Build a magical story in a few taps.</Text>
-          <Text style={styles.description}>
-            Choose an age range, pick characters, set a moral and tone, then create a story that
-            feels playful and age-appropriate.
-          </Text>
-          <View style={styles.heroBubbles}>
-            <View style={[styles.heroBubble, styles.heroBubblePink]} />
-            <View style={[styles.heroBubble, styles.heroBubbleYellow]} />
-            <View style={[styles.heroBubble, styles.heroBubbleBlue]} />
+          <View style={styles.progressTrack}>
+            <View style={styles.progressFill} />
+            <View style={styles.progressKnob} />
+            <Text style={styles.progressKnobStar}>★</Text>
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Step 1: Age</Text>
-          <View style={styles.tiles}>
+          <View style={styles.stepTitleRow}>
+            <View style={[styles.stepBadge, { backgroundColor: '#ffc93c' }]}>
+              <Text style={styles.stepBadgeText}>1</Text>
+            </View>
+            <Text style={styles.sectionTitle}>Who is the story for?</Text>
+          </View>
+          <View style={[styles.tiles, isDesktop && styles.tilesDesktop]}>
             {AGE_GROUPS.map((group) => {
               const selected = group.id === selectedAge;
 
@@ -235,7 +289,14 @@ export default function StoryBuddyApp() {
                 <Pressable
                   key={group.id}
                   onPress={() => handleAgeSelect(group.id)}
-                  style={[styles.tile, selected && styles.tileSelected]}
+                  style={[
+                    styles.tile,
+                    isDesktop && styles.tileDesktop,
+                    selected && styles.tileSelected,
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Select age group ${group.label}`}
+                  accessibilityState={{ selected }}
                 >
                   <Text style={[styles.tileNumber, selected && styles.tileNumberSelected]}>
                     {group.id === '2-4' ? '1' : group.id === '5-7' ? '2' : '3'}
@@ -253,8 +314,13 @@ export default function StoryBuddyApp() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Step 2: Characters</Text>
-          <View style={styles.chipRow}>
+          <View style={styles.stepTitleRow}>
+            <View style={[styles.stepBadge, { backgroundColor: '#5a8cff' }]}>
+              <Text style={styles.stepBadgeText}>2</Text>
+            </View>
+            <Text style={styles.sectionTitle}>Choose your Hero</Text>
+          </View>
+          <View style={styles.heroCategoryRow}>
             {CHARACTER_CATEGORIES.map((option) => {
               const isSelected = selectedCharacterCategory === option.id;
 
@@ -264,43 +330,85 @@ export default function StoryBuddyApp() {
                   onPress={() => {
                     setSelectedCharacterCategory(option.id);
                   }}
-                  style={[styles.chip, isSelected && styles.chipSelected]}
+                  style={[
+                    styles.heroCategoryChip,
+                    isSelected && styles.heroCategoryChipSelected,
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Character category ${option.label}`}
+                  accessibilityState={{ selected: isSelected }}
                 >
-                  <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
+                  <Text
+                    style={[
+                      styles.heroCategoryChipText,
+                      isSelected && styles.heroCategoryChipTextSelected,
+                    ]}
+                  >
                     {option.emoji} {option.label}
                   </Text>
                 </Pressable>
               );
             })}
           </View>
-          <View style={styles.chipRow}>
+
+          <View style={styles.heroCardGrid}>
             {visibleCharacters.map((characterOption) => {
               const isSelected = selectedCharacters.includes(characterOption);
+              const parts = characterOption.split(' ');
+              const maybeEmoji = parts[parts.length - 1];
+              const hasEmoji = maybeEmoji && maybeEmoji.length <= 4;
+              const label = hasEmoji ? parts.slice(0, -1).join(' ') : characterOption;
+              const avatar = hasEmoji ? maybeEmoji : CHARACTER_CATEGORIES.find(
+                (category) => category.id === selectedCharacterCategory
+              )?.emoji;
 
               return (
                 <Pressable
                   key={characterOption}
                   onPress={() => toggleCharacter(characterOption)}
-                  style={[styles.chip, isSelected && styles.chipSelected]}
+                  style={[
+                    styles.heroCard,
+                    isSelected && styles.heroCardSelected,
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Character ${characterOption}`}
+                  accessibilityState={{ selected: isSelected }}
                 >
-                  <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
-                    {characterOption}
+                  <View style={[styles.heroAvatarCircle, isSelected && styles.heroAvatarCircleSelected]}>
+                    <Text style={styles.heroAvatarEmoji}>{avatar}</Text>
+                  </View>
+                  <Text style={[styles.heroCardLabel, isSelected && styles.heroCardLabelSelected]}>
+                    {label}
                   </Text>
                 </Pressable>
               );
             })}
           </View>
-          <TextInput
-            value={customCharacter}
-            onChangeText={setCustomCharacter}
-            placeholder="Add Custom Character"
-            placeholderTextColor="#8b8197"
-            style={styles.input}
-          />
+
+          <View style={styles.customCharacterCard}>
+            <Text style={styles.customCharacterLabel}>Or create your own character...</Text>
+            <View style={styles.customCharacterInputRow}>
+              <TextInput
+                value={customCharacter}
+                onChangeText={setCustomCharacter}
+                placeholder="e.g. A flying purple penguin with a tuxedo"
+                placeholderTextColor="#b6b1a8"
+                style={styles.customCharacterInput}
+              />
+              <Pressable style={styles.customCharacterAddButton} accessibilityRole="button">
+                <Text style={styles.customCharacterAddButtonText}>Add</Text>
+              </Pressable>
+            </View>
+          </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Step 3: Moral</Text>
+          <View style={styles.stepTitleRow}>
+            <View style={[styles.stepBadge, { backgroundColor: '#38c976' }]}>
+              <Text style={styles.stepBadgeText}>3</Text>
+            </View>
+            <Text style={styles.sectionTitle}>What&apos;s the Moral?</Text>
+          </View>
           <View style={styles.chipRow}>
             {visibleMoralOptions.map((option) => {
               const isSelected = selectedMoral === option;
@@ -310,6 +418,9 @@ export default function StoryBuddyApp() {
                   key={option}
                   onPress={() => setSelectedMoral(option)}
                   style={[styles.chip, isSelected && styles.chipSelected]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Moral ${option}`}
+                  accessibilityState={{ selected: isSelected }}
                 >
                   <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
                     {option}
@@ -328,47 +439,99 @@ export default function StoryBuddyApp() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Step 4: Theme Category</Text>
-          <View style={styles.chipRow}>
-            {THEME_CATEGORIES.map((category) => {
-              const isSelected = selectedThemeCategory === category.id;
-
-              return (
-                <Pressable
-                  key={category.id}
-                  onPress={() => handleSelectThemeCategory(category.id)}
-                  style={[styles.chip, isSelected && styles.chipSelected]}
-                >
-                  <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
-                    {category.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
+          <View style={styles.stepTitleRow}>
+            <View style={[styles.stepBadge, { backgroundColor: '#cf8cff' }]}>
+              <Text style={styles.stepBadgeText}>4</Text>
+            </View>
+            <Text style={styles.sectionTitle}>What&apos;s the Theme?</Text>
           </View>
-          <View style={styles.chipRow}>
-            {(
-              THEME_CATEGORIES.find((category) => category.id === selectedThemeCategory)?.options || []
-            ).map((option) => {
-              const isSelected = selectedThemeOption === option;
+          <View style={[styles.themeSplit, isDesktop && styles.themeSplitDesktop]}>
+            <View style={[styles.themeColumn, isDesktop && styles.themeColumnDesktop]}>
+              <Text style={styles.themeColumnLabel}>MAIN CATEGORY</Text>
+              <View style={styles.themeMainList}>
+                {THEME_CATEGORIES.map((category) => {
+                  const isSelected = selectedThemeCategory === category.id;
+                  const visual = getThemeVisual(category.id);
 
-              return (
-                <Pressable
-                  key={option}
-                  onPress={() => setSelectedThemeOption(option)}
-                  style={[styles.chip, isSelected && styles.chipSelected]}
-                >
-                  <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
-                    {option}
-                  </Text>
-                </Pressable>
-              );
-            })}
+                  return (
+                    <Pressable
+                      key={category.id}
+                      onPress={() => handleSelectThemeCategory(category.id)}
+                      style={[
+                        styles.themeMainItem,
+                        isSelected && {
+                          borderColor: visual.border,
+                          backgroundColor: '#ffffff',
+                        },
+                      ]}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Theme category ${category.label}`}
+                      accessibilityState={{ selected: isSelected }}
+                    >
+                      <Text style={[styles.themeMainIcon, isSelected && { color: visual.border }]}>
+                        {visual.icon}
+                      </Text>
+                      <Text style={[styles.themeMainText, isSelected && { color: visual.border }]}>
+                        {category.label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+
+            <View style={[styles.themeColumn, isDesktop && styles.themeColumnDesktop]}>
+              <Text style={styles.themeColumnLabel}>PICK AN ADVENTURE</Text>
+              <View style={styles.themeAdventureList}>
+                {(
+                  THEME_CATEGORIES.find((category) => category.id === selectedThemeCategory)?.options || []
+                ).map((option) => {
+                  const isSelected = selectedThemeOption === option;
+                  const visual = getThemeVisual(selectedThemeCategory);
+                  const details = getThemeOptionDetails(option);
+
+                  return (
+                    <Pressable
+                      key={option}
+                      onPress={() => setSelectedThemeOption(option)}
+                      style={[
+                        styles.themeAdventureCard,
+                        isSelected && {
+                          borderColor: visual.border,
+                          backgroundColor: visual.tint,
+                        },
+                      ]}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Theme option ${option}`}
+                      accessibilityState={{ selected: isSelected }}
+                    >
+                      <View style={[styles.themeAdventureIconWrap, { backgroundColor: visual.tint }]}>
+                        <Text style={styles.themeAdventureIcon}>{details.icon}</Text>
+                      </View>
+                      <View style={styles.themeAdventureTextWrap}>
+                        <Text style={styles.themeAdventureTitle}>{option}</Text>
+                        <Text style={styles.themeAdventureSubtitle}>{details.description}</Text>
+                      </View>
+                      {isSelected ? (
+                        <View style={[styles.themeSelectedRibbon, { backgroundColor: visual.border }]}>
+                          <Text style={styles.themeSelectedRibbonText}>SELECTED</Text>
+                        </View>
+                      ) : null}
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Step 5: Tone</Text>
+          <View style={styles.stepTitleRow}>
+            <View style={[styles.stepBadge, { backgroundColor: '#ffb15e' }]}>
+              <Text style={styles.stepBadgeText}>5</Text>
+            </View>
+            <Text style={styles.sectionTitle}>What&apos;s the Vibe?</Text>
+          </View>
           <View style={styles.chipRow}>
             {TONE_OPTIONS.map((option) => {
               const isSelected = selectedTone === option.id;
@@ -378,6 +541,9 @@ export default function StoryBuddyApp() {
                   key={option.id}
                   onPress={() => setSelectedTone(option.id)}
                   style={[styles.chip, isSelected && styles.chipSelected]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Tone ${option.label}`}
+                  accessibilityState={{ selected: isSelected }}
                 >
                   <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
                     {option.label} {option.emoji}
@@ -404,48 +570,99 @@ export default function StoryBuddyApp() {
           </Text>
         </View>
 
-        <Pressable style={styles.primaryButton} onPress={handleGenerateStory}>
-          {isLoading ? (
-            <ActivityIndicator color="#fff8f2" />
-          ) : (
-            <Text style={styles.primaryButtonText}>Generate Story</Text>
-          )}
-        </Pressable>
-
-        <Pressable style={styles.secondaryActionButton} onPress={handleSurpriseMe}>
+        <View style={styles.actionStack}>
+        <Pressable
+          style={[styles.secondaryActionButton, styles.surpriseButton]}
+          onPress={handleSurpriseMe}
+          accessibilityRole="button"
+          accessibilityLabel="Surprise me with random story selections"
+        >
           <Text style={styles.secondaryActionButtonText}>Surprise Me</Text>
         </Pressable>
 
-        <View style={styles.storyCard}>
-          <View style={styles.storyHeader}>
-            <Text style={styles.sectionTitle}>Story</Text>
-            <Text style={styles.storyTag}>{selectedAge} years</Text>
-          </View>
-
-          {storyTitle ? <Text style={styles.storyTitle}>{storyTitle}</Text> : null}
-
-          <Text style={styles.storyText}>
-            {story ||
-              'Your generated story will appear here. Pick an age range, select characters, choose a moral, theme category, and tone, then tap Generate Story.'}
-          </Text>
-
-          {moral ? (
-            <View style={styles.moralCard}>
-              <Text style={styles.moralLabel}>Moral</Text>
-              <Text style={styles.moralText}>{moral}</Text>
-            </View>
-          ) : null}
-
-          {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
-        </View>
+        <Text style={styles.actionHelperText}>
+          Can&apos;t decide? We&apos;ll pick random magic for steps 2 through 5!
+        </Text>
 
         <Pressable
-          style={[styles.secondaryButton, !story && styles.secondaryButtonDisabled]}
-          onPress={handlePlayAudio}
+          style={[
+            styles.primaryButton,
+            !canCreateMagic && styles.primaryButtonDisabled,
+            isLoading && styles.primaryButtonLoading,
+          ]}
+          onPress={handleGenerateStory}
+          accessibilityRole="button"
+          accessibilityLabel="Create magic story"
+          accessibilityState={{ disabled: !canCreateMagic || isLoading }}
+          disabled={!canCreateMagic || isLoading}
         >
-          <Text style={styles.secondaryButtonText}>Play Audio</Text>
+          {isLoading ? (
+            <ActivityIndicator color="#5c4200" />
+          ) : (
+            <Text style={styles.primaryButtonText}>Create Magic  ✦</Text>
+          )}
         </Pressable>
+        </View>
+
+        {showResultSection ? (
+          <View style={styles.storyCard} accessible accessibilityLabel="Generated story section">
+            <View style={styles.storyHeader}>
+              <View>
+                <Text style={styles.storySectionEyebrow}>Your Story</Text>
+                <Text style={styles.sectionTitle}>Story</Text>
+              </View>
+              <Text style={styles.storyTag}>{selectedAge} years</Text>
+            </View>
+
+            {isLoading ? (
+              <View style={styles.storyLoadingState}>
+                <ActivityIndicator color="#ffb400" />
+                <Text style={styles.storyLoadingText}>Creating a magical story...</Text>
+              </View>
+            ) : (
+              <>
+                {storyTitle ? <Text style={styles.storyTitle}>{storyTitle}</Text> : null}
+
+                <Text style={styles.storyText}>
+                  {story ||
+                    'Your generated story will appear here. Pick an age range, select characters, choose a moral, theme category, and tone, then tap Create Magic or Surprise Me.'}
+                </Text>
+
+                {moral ? (
+                  <View style={styles.moralCard}>
+                    <Text style={styles.moralLabel}>Moral</Text>
+                    <Text style={styles.moralText}>{moral}</Text>
+                  </View>
+                ) : null}
+
+                {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+              </>
+            )}
+          </View>
+        ) : null}
+
+        {showResultSection ? (
+          <Pressable
+            style={[styles.secondaryButton, !story && styles.secondaryButtonDisabled]}
+            onPress={handlePlayAudio}
+            accessibilityRole="button"
+            accessibilityLabel="Play story audio"
+            accessibilityState={{ disabled: !story }}
+          >
+            <Text style={styles.secondaryButtonText}>Play Audio</Text>
+          </Pressable>
+        ) : null}
+        </View>
       </ScrollView>
+
+      <View style={[styles.bottomNav, isDesktop && styles.bottomNavDesktop]} pointerEvents="none">
+        <Text style={styles.bottomNavItem}>🏠</Text>
+        <View style={styles.bottomNavCenter}>
+          <Text style={styles.bottomNavCenterText}>CREATE</Text>
+        </View>
+        <Text style={styles.bottomNavItem}>📖</Text>
+        <Text style={styles.bottomNavItem}>✨</Text>
+      </View>
     </SafeAreaView>
   );
 }
@@ -453,77 +670,249 @@ export default function StoryBuddyApp() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff4d6',
+    backgroundColor: '#f3f5f9',
+  },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 10,
+    paddingTop: 8,
+    paddingBottom: 8,
+    backgroundColor: '#fff8ef',
+    borderBottomWidth: 1,
+    borderBottomColor: '#efcf8d',
+  },
+  topBarBrand: {
+    fontSize: 15,
+    fontStyle: 'italic',
+    fontWeight: '700',
+    color: '#f28c00',
+  },
+  topBarAvatar: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#111111',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  topBarAvatarText: {
+    fontSize: 12,
   },
   content: {
-    paddingHorizontal: 20,
-    paddingTop: 18,
-    paddingBottom: 40,
-    gap: 20,
+    paddingHorizontal: 10,
+    paddingTop: 12,
+    paddingBottom: 110,
+    gap: 18,
   },
-  heroCard: {
-    backgroundColor: '#fffdf7',
-    borderRadius: 32,
-    padding: 24,
-    borderWidth: 1,
-    borderColor: '#ffd98f',
-    shadowColor: '#ff9f43',
-    shadowOpacity: 0.16,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 5,
-    overflow: 'hidden',
+  pageShell: {
+    gap: 18,
   },
-  heroBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#ffe566',
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    marginBottom: 12,
+  heroIntro: {
+    width: '100%',
+    gap: 10,
   },
-  eyebrow: {
-    fontSize: 12,
-    fontWeight: '800',
-    letterSpacing: 1.3,
-    color: '#8f4a11',
+  heroIntroHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
   title: {
-    fontSize: 32,
-    lineHeight: 39,
-    fontWeight: '800',
-    color: '#24324a',
-    marginBottom: 10,
+    fontSize: 26,
+    lineHeight: 30,
+    fontWeight: '900',
+    color: '#8a6800',
+    flexShrink: 1,
   },
   description: {
-    fontSize: 15,
-    lineHeight: 23,
-    color: '#5f6281',
+    fontSize: 14,
+    lineHeight: 20,
+    color: '#6f7280',
+    marginTop: 6,
   },
-  heroBubbles: {
-    position: 'absolute',
-    right: -8,
-    top: -4,
-    flexDirection: 'row',
-    gap: 8,
-  },
-  heroBubble: {
-    width: 18,
-    height: 18,
+  progressTrack: {
+    height: 14,
     borderRadius: 999,
-    opacity: 0.9,
+    backgroundColor: '#e5e8ed',
+    overflow: 'hidden',
+    position: 'relative',
+    marginTop: 4,
   },
-  heroBubblePink: {
-    backgroundColor: '#ff82a9',
+  progressFill: {
+    width: '40%',
+    height: '100%',
+    backgroundColor: '#ffbf2f',
+    borderRadius: 999,
   },
-  heroBubbleYellow: {
-    backgroundColor: '#ffd84d',
+  progressKnob: {
+    position: 'absolute',
+    left: '38%',
+    top: 1,
+    width: 18,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#ffffff',
   },
-  heroBubbleBlue: {
-    backgroundColor: '#6dc7ff',
+  progressKnobStar: {
+    position: 'absolute',
+    left: '38.5%',
+    top: 1,
+    width: 18,
+    height: 12,
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    fontSize: 10,
+    color: '#ffab00',
+    fontWeight: '900',
   },
   section: {
     gap: 12,
+  },
+  stepTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  heroCategoryRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  heroCategoryChip: {
+    backgroundColor: '#ffffff',
+    borderRadius: 999,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: '#edf0f5',
+    minHeight: 52,
+    justifyContent: 'center',
+    shadowColor: '#d7dce7',
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 1,
+  },
+  heroCategoryChipSelected: {
+    backgroundColor: '#1565c0',
+    borderColor: '#1565c0',
+    shadowColor: '#1565c0',
+    shadowOpacity: 0.22,
+  },
+  heroCategoryChipText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#2f3545',
+  },
+  heroCategoryChipTextSelected: {
+    color: '#ffffff',
+  },
+  heroCardGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  heroCard: {
+    width: Platform.OS === 'web' ? '18.5%' : '31%',
+    minWidth: 96,
+    backgroundColor: '#ffffff',
+    borderRadius: 24,
+    paddingHorizontal: 12,
+    paddingVertical: 18,
+    borderWidth: 1.5,
+    borderColor: '#eef1f6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  heroCardSelected: {
+    borderColor: '#1565c0',
+    shadowColor: '#1565c0',
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
+  },
+  heroAvatarCircle: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: '#f6f7fb',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroAvatarCircleSelected: {
+    backgroundColor: '#e9f2ff',
+  },
+  heroAvatarEmoji: {
+    fontSize: 32,
+  },
+  heroCardLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#3a4051',
+    textAlign: 'center',
+  },
+  heroCardLabelSelected: {
+    color: '#1565c0',
+  },
+  customCharacterCard: {
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: '#d0d4dc',
+    borderRadius: 28,
+    backgroundColor: '#fbfbf9',
+    padding: 16,
+    gap: 12,
+  },
+  customCharacterLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#9a7a10',
+  },
+  customCharacterInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  customCharacterInput: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+    borderRadius: 999,
+    borderWidth: 1.5,
+    borderColor: '#e4e8f0',
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    fontSize: 15,
+    color: '#283042',
+    minHeight: 54,
+  },
+  customCharacterAddButton: {
+    backgroundColor: '#1565c0',
+    borderRadius: 999,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    minHeight: 46,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  customCharacterAddButtonText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  stepBadge: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#242424',
   },
   chipRow: {
     flexDirection: 'row',
@@ -531,9 +920,127 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   sectionTitle: {
-    fontSize: 19,
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#1d1d22',
+  },
+  themeSplit: {
+    gap: 14,
+  },
+  themeSplitDesktop: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 24,
+  },
+  themeColumn: {
+    gap: 10,
+  },
+  themeColumnDesktop: {
+    flex: 1,
+    minWidth: 0,
+  },
+  themeColumnLabel: {
+    fontSize: 12,
     fontWeight: '800',
-    color: '#24324a',
+    letterSpacing: 1,
+    color: '#8c6c42',
+  },
+  themeMainList: {
+    gap: 10,
+  },
+  themeMainItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    minHeight: 58,
+    borderRadius: 999,
+    borderWidth: 1.5,
+    borderColor: '#e5d5f1',
+    backgroundColor: '#eaebed',
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    shadowColor: '#d8c7e8',
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    elevation: 1,
+  },
+  themeMainIcon: {
+    fontSize: 18,
+    color: '#8a6b45',
+  },
+  themeMainText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#8a6b45',
+  },
+  themeAdventureList: {
+    gap: 10,
+  },
+  themeAdventureCard: {
+    position: 'relative',
+    overflow: 'hidden',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    borderRadius: 24,
+    borderWidth: 1.5,
+    borderColor: '#e8d7f3',
+    backgroundColor: '#ffffff',
+    padding: 14,
+    paddingRight: 92,
+    minHeight: 86,
+    shadowColor: '#e3d9ef',
+    shadowOpacity: 0.16,
+    shadowRadius: 12,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    elevation: 1,
+  },
+  themeAdventureIconWrap: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  themeAdventureIcon: {
+    fontSize: 22,
+  },
+  themeAdventureTextWrap: {
+    flex: 1,
+    gap: 3,
+  },
+  themeAdventureTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#232433',
+  },
+  themeAdventureSubtitle: {
+    fontSize: 12,
+    lineHeight: 17,
+    color: '#7a7385',
+  },
+  themeSelectedRibbon: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    borderBottomLeftRadius: 14,
+    borderTopRightRadius: 22,
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    paddingBottom: 6,
+  },
+  themeSelectedRibbonText: {
+    fontSize: 10,
+    fontWeight: '900',
+    color: '#ffffff',
+    letterSpacing: 0.4,
   },
   chip: {
     backgroundColor: '#ffffff',
@@ -542,10 +1049,12 @@ const styles = StyleSheet.create({
     borderColor: '#ffd98f',
     paddingHorizontal: 15,
     paddingVertical: 11,
+    minHeight: 44,
+    justifyContent: 'center',
   },
   chipSelected: {
-    backgroundColor: '#5c7cfa',
-    borderColor: '#5c7cfa',
+    backgroundColor: '#2563d8',
+    borderColor: '#2563d8',
   },
   chipText: {
     fontSize: 14,
@@ -558,21 +1067,26 @@ const styles = StyleSheet.create({
   tiles: {
     gap: 12,
   },
+  tilesDesktop: {
+    flexDirection: 'row',
+  },
   tile: {
     backgroundColor: '#ffffff',
     borderRadius: 24,
-    padding: 18,
+    padding: 22,
     borderWidth: 1,
-    borderColor: '#ffd98f',
-    shadowColor: '#ffcf5b',
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 2,
+    borderColor: '#eef0f4',
+    minHeight: 160,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tileDesktop: {
+    flex: 1,
+    minWidth: 0,
   },
   tileSelected: {
-    backgroundColor: '#6dc7ff',
-    borderColor: '#6dc7ff',
+    backgroundColor: '#fff8ea',
+    borderColor: '#ffbf1f',
   },
   tileNumber: {
     width: 34,
@@ -592,21 +1106,21 @@ const styles = StyleSheet.create({
     color: '#3171b7',
   },
   tileLabel: {
-    fontSize: 17,
+    fontSize: 25,
     fontWeight: '800',
-    color: '#24324a',
+    color: '#1f2431',
     marginBottom: 6,
   },
   tileLabelSelected: {
-    color: '#1f3a5f',
+    color: '#1f2431',
   },
   tileSubtitle: {
-    fontSize: 14,
-    lineHeight: 20,
-    color: '#6b7186',
+    fontSize: 11,
+    lineHeight: 16,
+    color: '#7a7f8f',
   },
   tileSubtitleSelected: {
-    color: '#26537f',
+    color: '#7a7f8f',
   },
   input: {
     backgroundColor: '#ffffff',
@@ -617,48 +1131,78 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     fontSize: 16,
     color: '#24324a',
+    minHeight: 52,
   },
   helperText: {
-    fontSize: 13,
+    fontSize: 11,
     lineHeight: 18,
     color: '#6b7186',
   },
   primaryButton: {
-    backgroundColor: '#ff7b54',
-    borderRadius: 18,
-    paddingVertical: 17,
+    backgroundColor: '#ffcb3c',
+    borderRadius: 36,
+    minHeight: 88,
+    width: '100%',
+    maxWidth: 320,
+    paddingHorizontal: 24,
     alignItems: 'center',
-    shadowColor: '#ff7b54',
-    shadowOpacity: 0.28,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 5,
+    justifyContent: 'center',
+    shadowColor: '#b98b00',
+    shadowOpacity: 0.38,
+    shadowRadius: 0,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 6,
   },
   primaryButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '800',
+    color: '#765800',
+    fontSize: 21,
+    lineHeight: 24,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  primaryButtonDisabled: {
+    backgroundColor: '#e9e2c3',
+    shadowOpacity: 0.1,
+  },
+  primaryButtonLoading: {
+    opacity: 0.9,
   },
   secondaryActionButton: {
-    backgroundColor: '#ffe566',
-    borderRadius: 18,
-    paddingVertical: 15,
+    backgroundColor: '#ffffff',
+    borderRadius: 999,
+    paddingVertical: 12,
+    paddingHorizontal: 18,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#ffd84d',
+    borderWidth: 1.5,
+    borderColor: '#bfd7f3',
   },
   secondaryActionButtonText: {
-    color: '#7a4a00',
-    fontSize: 16,
-    fontWeight: '800',
+    color: '#276cc7',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  surpriseButton: {
+    minWidth: 150,
+  },
+  actionStack: {
+    alignItems: 'center',
+    gap: 10,
+    paddingTop: 4,
+  },
+  actionHelperText: {
+    fontSize: 11,
+    lineHeight: 15,
+    textAlign: 'center',
+    color: '#7a7187',
+    maxWidth: 220,
   },
   storyCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 28,
+    borderRadius: 24,
     padding: 20,
     minHeight: 220,
     borderWidth: 1,
-    borderColor: '#ffd98f',
+    borderColor: '#eceff4',
     gap: 14,
   },
   storyHeader: {
@@ -675,6 +1219,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 7,
     borderRadius: 999,
+  },
+  storySectionEyebrow: {
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 1.2,
+    color: '#9aa3b5',
+    marginBottom: 2,
+  },
+  storyLoadingState: {
+    minHeight: 120,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+  },
+  storyLoadingText: {
+    fontSize: 14,
+    color: '#4b5873',
+    fontWeight: '600',
   },
   storyText: {
     fontSize: 16,
@@ -722,5 +1284,52 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '800',
+  },
+  bottomNav: {
+    position: 'absolute',
+    left: 10,
+    right: 10,
+    bottom: 10,
+    backgroundColor: '#ffffff',
+    borderRadius: 28,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    shadowColor: '#98a2b3',
+    shadowOpacity: 0.18,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 8,
+  },
+  bottomNavDesktop: {
+    left: '50%',
+    right: 'auto',
+    width: 360,
+    marginLeft: -180,
+  },
+  bottomNavItem: {
+    fontSize: 16,
+    color: '#9ca3af',
+    minWidth: 24,
+    textAlign: 'center',
+  },
+  bottomNavCenter: {
+    backgroundColor: '#ffbf1f',
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: -24,
+    borderWidth: 5,
+    borderColor: '#ffffff',
+  },
+  bottomNavCenterText: {
+    fontSize: 8,
+    fontWeight: '900',
+    color: '#ffffff',
+    letterSpacing: 0.7,
   },
 });
