@@ -1,16 +1,51 @@
 import OpenAI from 'openai';
 import { apiConfig } from '../config.mjs';
+import {
+  getCharacterCategoryById,
+  getThemeCategoryById,
+  getToneById,
+} from '../../config/storyOptions.js';
 
 function stripCodeFences(value) {
   return value.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/, '').trim();
 }
 
-export async function generateStory({ age, characters, theme }) {
+export async function generateStory({
+  age,
+  characterCategory,
+  characters,
+  moral,
+  themeCategory,
+  theme,
+  tone,
+}) {
   if (!apiConfig.openAiApiKey || apiConfig.openAiApiKey === 'your_openai_api_key_here') {
     const error = new Error(
       'OPENAI_API_KEY is missing. Add a real key to your .env file before calling /generate-story.'
     );
     error.statusCode = 500;
+    throw error;
+  }
+
+  const characterCategoryOption = getCharacterCategoryById(characterCategory);
+  const themeCategoryOption = getThemeCategoryById(themeCategory);
+  const toneOption = getToneById(tone);
+
+  if (!characterCategoryOption) {
+    const error = new Error('The selected characterCategory is invalid.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (!themeCategoryOption) {
+    const error = new Error('The selected themeCategory is invalid.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (!toneOption) {
+    const error = new Error('The selected tone is invalid.');
+    error.statusCode = 400;
     throw error;
   }
 
@@ -36,14 +71,19 @@ export async function generateStory({ age, characters, theme }) {
             type: 'input_text',
             text: `Create a children's story using the following inputs.
 Age range: ${age}
-Characters: ${characters}
+Character category: ${characterCategoryOption.label}
+Characters: ${characters.join(', ')}
+Moral focus: ${moral}
+Theme category: ${themeCategoryOption.label}
 Theme: ${theme}
+Tone: ${toneOption.label}
 
 Requirements:
 - 3 short paragraphs maximum
-- friendly tone
+- keep the tone aligned to the requested tone
+- make the plot clearly reflect the selected theme category and theme
+- weave the requested moral naturally into the story
 - suitable for bedtime or classroom reading
-- include a clear moral
 - return JSON only`,
           },
         ],

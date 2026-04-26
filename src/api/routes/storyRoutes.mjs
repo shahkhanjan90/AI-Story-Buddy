@@ -9,16 +9,33 @@ export function createStoryRouter() {
   });
 
   router.post('/generate-story', async (req, res) => {
-    const { age, characters, theme } = req.body ?? {};
+    const { age, characterCategory, characters, moral, themeCategory, theme, tone } = req.body ?? {};
 
-    if (!age || !characters || !theme) {
+    if (
+      !age ||
+      !characterCategory ||
+      !Array.isArray(characters) ||
+      !characters.length ||
+      !moral ||
+      !themeCategory ||
+      !theme ||
+      !tone
+    ) {
       return res.status(400).json({
-        error: 'age, characters, and theme are required.',
+        error: 'age, characterCategory, characters, moral, themeCategory, theme, and tone are required.',
       });
     }
 
     try {
-      const story = await generateStory({ age, characters, theme });
+      const story = await generateStory({
+        age,
+        characterCategory,
+        characters,
+        moral,
+        themeCategory,
+        theme,
+        tone,
+      });
       return res.json(story);
     } catch (error) {
       return res.status(error.statusCode || 500).json({
