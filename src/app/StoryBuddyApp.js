@@ -249,7 +249,10 @@ export default function StoryBuddyApp() {
       <StatusBar barStyle="dark-content" />
 
       <View style={styles.topBar}>
-        <Text style={styles.topBarBrand}>Magic Lab</Text>
+        <View style={styles.topBarBrandWrap}>
+          <Text style={styles.topBarSparkle}>✦</Text>
+          <Text style={styles.topBarBrand}>Magic Lab</Text>
+        </View>
         <View style={styles.topBarAvatar}>
           <Text style={styles.topBarAvatarText}>🧒</Text>
         </View>
@@ -266,11 +269,6 @@ export default function StoryBuddyApp() {
               <Text style={styles.title}>Creation Station</Text>
               <Text style={styles.description}>Let&apos;s mix some magic into your story!</Text>
             </View>
-          </View>
-          <View style={styles.progressTrack}>
-            <View style={styles.progressFill} />
-            <View style={styles.progressKnob} />
-            <Text style={styles.progressKnobStar}>★</Text>
           </View>
         </View>
 
@@ -676,29 +674,47 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 10,
-    paddingTop: 8,
-    paddingBottom: 8,
-    backgroundColor: '#fff8ef',
+    paddingHorizontal: 14,
+    paddingTop: 10,
+    paddingBottom: 10,
+    backgroundColor: '#fffaf1',
     borderBottomWidth: 1,
-    borderBottomColor: '#efcf8d',
+    borderBottomColor: '#f1d58d',
+  },
+  topBarBrandWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  topBarSparkle: {
+    fontSize: 15,
+    color: '#f39a00',
+    fontWeight: '900',
   },
   topBarBrand: {
-    fontSize: 15,
+    fontSize: 16,
     fontStyle: 'italic',
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#f28c00',
+    letterSpacing: 0.2,
   },
   topBarAvatar: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     backgroundColor: '#111111',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#ffca28',
+    shadowColor: '#000000',
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
   topBarAvatarText: {
-    fontSize: 12,
+    fontSize: 14,
   },
   content: {
     paddingHorizontal: 10,
@@ -730,41 +746,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     color: '#6f7280',
     marginTop: 6,
-  },
-  progressTrack: {
-    height: 14,
-    borderRadius: 999,
-    backgroundColor: '#e5e8ed',
-    overflow: 'hidden',
-    position: 'relative',
-    marginTop: 4,
-  },
-  progressFill: {
-    width: '40%',
-    height: '100%',
-    backgroundColor: '#ffbf2f',
-    borderRadius: 999,
-  },
-  progressKnob: {
-    position: 'absolute',
-    left: '38%',
-    top: 1,
-    width: 18,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#ffffff',
-  },
-  progressKnobStar: {
-    position: 'absolute',
-    left: '38.5%',
-    top: 1,
-    width: 18,
-    height: 12,
-    textAlign: 'center',
-    textAlignVertical: 'center',
-    fontSize: 10,
-    color: '#ffab00',
-    fontWeight: '900',
   },
   section: {
     gap: 12,
