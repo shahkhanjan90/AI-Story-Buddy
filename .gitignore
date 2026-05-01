@@ -9,3 +9,5 @@ web-build/
 .env
 .api-*.log
 .expo-*.log
+
+.vercel

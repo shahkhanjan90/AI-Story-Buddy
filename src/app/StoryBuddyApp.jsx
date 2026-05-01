@@ -25,7 +25,12 @@ import {
 } from '../config/storyOptions';
 
 const DEFAULT_API_BASE_URL =
-  Platform.OS === 'web' ? 'http://localhost:3000' : 'http://localhost:3000';
+  Platform.OS === 'web' &&
+  typeof window !== 'undefined' &&
+  window.location.hostname !== 'localhost' &&
+  window.location.hostname !== '127.0.0.1'
+    ? '/api'
+    : 'http://localhost:3000';
 
 function getThemeVisual(themeId) {
   const visuals = {
@@ -71,6 +76,7 @@ export default function StoryBuddyApp() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [showResultSection, setShowResultSection] = useState(false);
+  const [activePage, setActivePage] = useState('create');
 
   const visibleCharacters =
     CHARACTER_CATEGORIES.find((category) => category.id === selectedCharacterCategory)?.byAge[
@@ -78,6 +84,7 @@ export default function StoryBuddyApp() {
     ] || [];
   const visibleMoralOptions = MORAL_OPTIONS_BY_AGE[selectedAge];
   const isDesktop = width >= 960;
+  const isCompactMobile = width < 420;
   const contentWidth = Math.min(width - 20, 980);
   const canCreateMagic =
     selectedAge &&
@@ -243,6 +250,43 @@ export default function StoryBuddyApp() {
     );
   };
 
+  const navItems = [
+    { id: 'home', label: 'HOME', icon: '🏠', isPrimary: false },
+    { id: 'create', label: 'CREATE', icon: '➕', isPrimary: true },
+    { id: 'stories', label: 'STORIES', icon: '📖', isPrimary: false },
+    { id: 'parents', label: 'PARENTS', icon: '👪', isPrimary: false },
+  ];
+
+  const handleNavPress = (itemId) => {
+    setActivePage(itemId);
+  };
+
+  const renderComingSoon = () => (
+    <View style={styles.comingSoonShell}>
+      <View style={styles.comingSoonCard}>
+        <Text style={styles.comingSoonBadge}>Coming soon</Text>
+        <Text style={styles.comingSoonTitle}>
+          {activePage === 'home'
+            ? 'Home'
+            : activePage === 'stories'
+              ? 'Stories'
+              : 'Parents'}
+        </Text>
+        <Text style={styles.comingSoonText}>
+          This section is on the way. For now, head back to Create to build a new story magic.
+        </Text>
+        <Pressable
+          style={styles.comingSoonButton}
+          onPress={() => setActivePage('create')}
+          accessibilityRole="button"
+          accessibilityLabel="Back to create page"
+        >
+          <Text style={styles.comingSoonButtonText}>Back to Create</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ExpoStatusBar style="dark" />
@@ -259,15 +303,26 @@ export default function StoryBuddyApp() {
       </View>
 
       <ScrollView
-        contentContainerStyle={[styles.content, { alignItems: 'center' }]}
+        contentContainerStyle={[
+          styles.content,
+          {
+            alignItems: 'center',
+            paddingHorizontal: isCompactMobile ? 6 : 10,
+            paddingBottom: isCompactMobile ? 128 : 110,
+          },
+        ]}
         showsVerticalScrollIndicator={false}
       >
         <View style={[styles.pageShell, { width: contentWidth }]}>
+        {activePage === 'create' ? (
+          <>
         <View style={styles.heroIntro}>
           <View style={styles.heroIntroHeader}>
             <View>
-              <Text style={styles.title}>Creation Station</Text>
-              <Text style={styles.description}>Let&apos;s mix some magic into your story!</Text>
+              <Text style={[styles.title, isCompactMobile && styles.titleCompact]}>Creation Station</Text>
+              <Text style={[styles.description, isCompactMobile && styles.descriptionCompact]}>
+                Let&apos;s mix some magic into your story!
+              </Text>
             </View>
           </View>
         </View>
@@ -277,7 +332,9 @@ export default function StoryBuddyApp() {
             <View style={[styles.stepBadge, { backgroundColor: '#ffc93c' }]}>
               <Text style={styles.stepBadgeText}>1</Text>
             </View>
-            <Text style={styles.sectionTitle}>Who is the story for?</Text>
+            <Text style={[styles.sectionTitle, isCompactMobile && styles.sectionTitleCompact]}>
+              Who is the story for?
+            </Text>
           </View>
           <View style={[styles.tiles, isDesktop && styles.tilesDesktop]}>
             {AGE_GROUPS.map((group) => {
@@ -316,7 +373,9 @@ export default function StoryBuddyApp() {
             <View style={[styles.stepBadge, { backgroundColor: '#5a8cff' }]}>
               <Text style={styles.stepBadgeText}>2</Text>
             </View>
-            <Text style={styles.sectionTitle}>Choose your Hero</Text>
+            <Text style={[styles.sectionTitle, isCompactMobile && styles.sectionTitleCompact]}>
+              Choose your Hero
+            </Text>
           </View>
           <View style={styles.heroCategoryRow}>
             {CHARACTER_CATEGORIES.map((option) => {
@@ -366,16 +425,31 @@ export default function StoryBuddyApp() {
                   onPress={() => toggleCharacter(characterOption)}
                   style={[
                     styles.heroCard,
+                    isCompactMobile && styles.heroCardCompact,
                     isSelected && styles.heroCardSelected,
                   ]}
                   accessibilityRole="button"
                   accessibilityLabel={`Character ${characterOption}`}
                   accessibilityState={{ selected: isSelected }}
                 >
-                  <View style={[styles.heroAvatarCircle, isSelected && styles.heroAvatarCircleSelected]}>
-                    <Text style={styles.heroAvatarEmoji}>{avatar}</Text>
+                  <View
+                    style={[
+                      styles.heroAvatarCircle,
+                      isCompactMobile && styles.heroAvatarCircleCompact,
+                      isSelected && styles.heroAvatarCircleSelected,
+                    ]}
+                  >
+                    <Text style={[styles.heroAvatarEmoji, isCompactMobile && styles.heroAvatarEmojiCompact]}>
+                      {avatar}
+                    </Text>
                   </View>
-                  <Text style={[styles.heroCardLabel, isSelected && styles.heroCardLabelSelected]}>
+                  <Text
+                    style={[
+                      styles.heroCardLabel,
+                      isCompactMobile && styles.heroCardLabelCompact,
+                      isSelected && styles.heroCardLabelSelected,
+                    ]}
+                  >
                     {label}
                   </Text>
                 </Pressable>
@@ -405,7 +479,9 @@ export default function StoryBuddyApp() {
             <View style={[styles.stepBadge, { backgroundColor: '#38c976' }]}>
               <Text style={styles.stepBadgeText}>3</Text>
             </View>
-            <Text style={styles.sectionTitle}>What&apos;s the Moral?</Text>
+            <Text style={[styles.sectionTitle, isCompactMobile && styles.sectionTitleCompact]}>
+              What&apos;s the Moral?
+            </Text>
           </View>
           <View style={styles.chipRow}>
             {visibleMoralOptions.map((option) => {
@@ -415,12 +491,18 @@ export default function StoryBuddyApp() {
                 <Pressable
                   key={option}
                   onPress={() => setSelectedMoral(option)}
-                  style={[styles.chip, isSelected && styles.chipSelected]}
+                  style={[styles.chip, isCompactMobile && styles.chipCompact, isSelected && styles.chipSelected]}
                   accessibilityRole="button"
                   accessibilityLabel={`Moral ${option}`}
                   accessibilityState={{ selected: isSelected }}
                 >
-                  <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
+                  <Text
+                    style={[
+                      styles.chipText,
+                      isCompactMobile && styles.chipTextCompact,
+                      isSelected && styles.chipTextSelected,
+                    ]}
+                  >
                     {option}
                   </Text>
                 </Pressable>
@@ -441,7 +523,9 @@ export default function StoryBuddyApp() {
             <View style={[styles.stepBadge, { backgroundColor: '#cf8cff' }]}>
               <Text style={styles.stepBadgeText}>4</Text>
             </View>
-            <Text style={styles.sectionTitle}>What&apos;s the Theme?</Text>
+            <Text style={[styles.sectionTitle, isCompactMobile && styles.sectionTitleCompact]}>
+              What&apos;s the Theme?
+            </Text>
           </View>
           <View style={[styles.themeSplit, isDesktop && styles.themeSplitDesktop]}>
             <View style={[styles.themeColumn, isDesktop && styles.themeColumnDesktop]}>
@@ -457,6 +541,7 @@ export default function StoryBuddyApp() {
                       onPress={() => handleSelectThemeCategory(category.id)}
                       style={[
                         styles.themeMainItem,
+                        isCompactMobile && styles.themeMainItemCompact,
                         isSelected && {
                           borderColor: visual.border,
                           backgroundColor: '#ffffff',
@@ -466,10 +551,22 @@ export default function StoryBuddyApp() {
                       accessibilityLabel={`Theme category ${category.label}`}
                       accessibilityState={{ selected: isSelected }}
                     >
-                      <Text style={[styles.themeMainIcon, isSelected && { color: visual.border }]}>
+                      <Text
+                        style={[
+                          styles.themeMainIcon,
+                          isCompactMobile && styles.themeMainIconCompact,
+                          isSelected && { color: visual.border },
+                        ]}
+                      >
                         {visual.icon}
                       </Text>
-                      <Text style={[styles.themeMainText, isSelected && { color: visual.border }]}>
+                      <Text
+                        style={[
+                          styles.themeMainText,
+                          isCompactMobile && styles.themeMainTextCompact,
+                          isSelected && { color: visual.border },
+                        ]}
+                      >
                         {category.label}
                       </Text>
                     </Pressable>
@@ -494,6 +591,7 @@ export default function StoryBuddyApp() {
                       onPress={() => setSelectedThemeOption(option)}
                       style={[
                         styles.themeAdventureCard,
+                        isCompactMobile && styles.themeAdventureCardCompact,
                         isSelected && {
                           borderColor: visual.border,
                           backgroundColor: visual.tint,
@@ -503,12 +601,36 @@ export default function StoryBuddyApp() {
                       accessibilityLabel={`Theme option ${option}`}
                       accessibilityState={{ selected: isSelected }}
                     >
-                      <View style={[styles.themeAdventureIconWrap, { backgroundColor: visual.tint }]}>
-                        <Text style={styles.themeAdventureIcon}>{details.icon}</Text>
+                      <View
+                        style={[
+                          styles.themeAdventureIconWrap,
+                          isCompactMobile && styles.themeAdventureIconWrapCompact,
+                          { backgroundColor: visual.tint },
+                        ]}
+                      >
+                        <Text
+                          style={[styles.themeAdventureIcon, isCompactMobile && styles.themeAdventureIconCompact]}
+                        >
+                          {details.icon}
+                        </Text>
                       </View>
                       <View style={styles.themeAdventureTextWrap}>
-                        <Text style={styles.themeAdventureTitle}>{option}</Text>
-                        <Text style={styles.themeAdventureSubtitle}>{details.description}</Text>
+                        <Text
+                          style={[
+                            styles.themeAdventureTitle,
+                            isCompactMobile && styles.themeAdventureTitleCompact,
+                          ]}
+                        >
+                          {option}
+                        </Text>
+                        <Text
+                          style={[
+                            styles.themeAdventureSubtitle,
+                            isCompactMobile && styles.themeAdventureSubtitleCompact,
+                          ]}
+                        >
+                          {details.description}
+                        </Text>
                       </View>
                       {isSelected ? (
                         <View style={[styles.themeSelectedRibbon, { backgroundColor: visual.border }]}>
@@ -528,7 +650,9 @@ export default function StoryBuddyApp() {
             <View style={[styles.stepBadge, { backgroundColor: '#ffb15e' }]}>
               <Text style={styles.stepBadgeText}>5</Text>
             </View>
-            <Text style={styles.sectionTitle}>What&apos;s the Vibe?</Text>
+            <Text style={[styles.sectionTitle, isCompactMobile && styles.sectionTitleCompact]}>
+              What&apos;s the Vibe?
+            </Text>
           </View>
           <View style={styles.chipRow}>
             {TONE_OPTIONS.map((option) => {
@@ -538,12 +662,18 @@ export default function StoryBuddyApp() {
                 <Pressable
                   key={option.id}
                   onPress={() => setSelectedTone(option.id)}
-                  style={[styles.chip, isSelected && styles.chipSelected]}
+                  style={[styles.chip, isCompactMobile && styles.chipCompact, isSelected && styles.chipSelected]}
                   accessibilityRole="button"
                   accessibilityLabel={`Tone ${option.label}`}
                   accessibilityState={{ selected: isSelected }}
                 >
-                  <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
+                  <Text
+                    style={[
+                      styles.chipText,
+                      isCompactMobile && styles.chipTextCompact,
+                      isSelected && styles.chipTextSelected,
+                    ]}
+                  >
                     {option.label} {option.emoji}
                   </Text>
                 </Pressable>
@@ -553,7 +683,9 @@ export default function StoryBuddyApp() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Story API URL</Text>
+          <Text style={[styles.sectionTitle, isCompactMobile && styles.sectionTitleCompact]}>
+            Story API URL
+          </Text>
           <TextInput
             value={apiBaseUrl}
             onChangeText={setApiBaseUrl}
@@ -568,9 +700,13 @@ export default function StoryBuddyApp() {
           </Text>
         </View>
 
-        <View style={styles.actionStack}>
+        <View style={[styles.actionStack, isCompactMobile && styles.actionStackCompact]}>
         <Pressable
-          style={[styles.secondaryActionButton, styles.surpriseButton]}
+          style={[
+            styles.secondaryActionButton,
+            styles.surpriseButton,
+            isCompactMobile && styles.surpriseButtonCompact,
+          ]}
           onPress={handleSurpriseMe}
           accessibilityRole="button"
           accessibilityLabel="Surprise me with random story selections"
@@ -585,6 +721,7 @@ export default function StoryBuddyApp() {
         <Pressable
           style={[
             styles.primaryButton,
+            isCompactMobile && styles.primaryButtonCompact,
             !canCreateMagic && styles.primaryButtonDisabled,
             isLoading && styles.primaryButtonLoading,
           ]}
@@ -597,7 +734,9 @@ export default function StoryBuddyApp() {
           {isLoading ? (
             <ActivityIndicator color="#5c4200" />
           ) : (
-            <Text style={styles.primaryButtonText}>Create Magic  ✦</Text>
+            <Text style={[styles.primaryButtonText, isCompactMobile && styles.primaryButtonTextCompact]}>
+              Create Magic  ✦
+            </Text>
           )}
         </Pressable>
         </View>
@@ -607,7 +746,9 @@ export default function StoryBuddyApp() {
             <View style={styles.storyHeader}>
               <View>
                 <Text style={styles.storySectionEyebrow}>Your Story</Text>
-                <Text style={styles.sectionTitle}>Story</Text>
+                <Text style={[styles.sectionTitle, isCompactMobile && styles.sectionTitleCompact]}>
+                  Story
+                </Text>
               </View>
               <Text style={styles.storyTag}>{selectedAge} years</Text>
             </View>
@@ -621,7 +762,7 @@ export default function StoryBuddyApp() {
               <>
                 {storyTitle ? <Text style={styles.storyTitle}>{storyTitle}</Text> : null}
 
-                <Text style={styles.storyText}>
+                <Text style={[styles.storyText, isCompactMobile && styles.storyTextCompact]}>
                   {story ||
                     'Your generated story will appear here. Pick an age range, select characters, choose a moral, theme category, and tone, then tap Create Magic or Surprise Me.'}
                 </Text>
@@ -647,19 +788,75 @@ export default function StoryBuddyApp() {
             accessibilityLabel="Play story audio"
             accessibilityState={{ disabled: !story }}
           >
-            <Text style={styles.secondaryButtonText}>Play Audio</Text>
+            <Text style={[styles.secondaryButtonText, isCompactMobile && styles.secondaryButtonTextCompact]}>
+              Play Audio
+            </Text>
           </Pressable>
         ) : null}
+          </>
+        ) : (
+          renderComingSoon()
+        )}
         </View>
       </ScrollView>
 
-      <View style={[styles.bottomNav, isDesktop && styles.bottomNavDesktop]} pointerEvents="none">
-        <Text style={styles.bottomNavItem}>🏠</Text>
-        <View style={styles.bottomNavCenter}>
-          <Text style={styles.bottomNavCenterText}>CREATE</Text>
-        </View>
-        <Text style={styles.bottomNavItem}>📖</Text>
-        <Text style={styles.bottomNavItem}>✨</Text>
+      <View
+        style={[
+          styles.bottomNav,
+          isCompactMobile && styles.bottomNavCompact,
+          isDesktop && styles.bottomNavDesktop,
+        ]}
+      >
+        {navItems.map((item) => {
+          const isActive = activePage === item.id;
+
+          return (
+            <Pressable
+              key={item.id}
+              style={[
+                styles.bottomNavItemWrap,
+                isCompactMobile && styles.bottomNavItemWrapCompact,
+                item.isPrimary && styles.bottomNavPrimaryWrap,
+              ]}
+              onPress={() => handleNavPress(item.id)}
+              accessibilityRole="button"
+              accessibilityLabel={item.label}
+              accessibilityState={{ selected: isActive }}
+            >
+              {item.isPrimary ? (
+                <View style={[styles.bottomNavCenter, isCompactMobile && styles.bottomNavCenterCompact, isActive && styles.bottomNavCenterActive]}>
+                  <Text style={[styles.bottomNavCenterIcon, isCompactMobile && styles.bottomNavCenterIconCompact]}>
+                    {item.icon}
+                  </Text>
+                  <Text style={[styles.bottomNavCenterText, isCompactMobile && styles.bottomNavCenterTextCompact]}>
+                    {item.label}
+                  </Text>
+                </View>
+              ) : (
+                <>
+                  <Text
+                    style={[
+                      styles.bottomNavItem,
+                      isCompactMobile && styles.bottomNavItemCompact,
+                      isActive && styles.bottomNavItemActive,
+                    ]}
+                  >
+                    {item.icon}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.bottomNavItemLabel,
+                      isCompactMobile && styles.bottomNavItemLabelCompact,
+                      isActive && styles.bottomNavItemLabelActive,
+                    ]}
+                  >
+                    {item.label}
+                  </Text>
+                </>
+              )}
+            </Pressable>
+          );
+        })}
       </View>
     </SafeAreaView>
   );
@@ -687,12 +884,12 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   topBarSparkle: {
-    fontSize: 15,
+    fontSize: 17,
     color: '#f39a00',
     fontWeight: '900',
   },
   topBarBrand: {
-    fontSize: 16,
+    fontSize: 17.5,
     fontStyle: 'italic',
     fontWeight: '800',
     color: '#f28c00',
@@ -747,8 +944,20 @@ const styles = StyleSheet.create({
     color: '#6f7280',
     marginTop: 6,
   },
+  titleCompact: {
+    fontSize: 23,
+    lineHeight: 27,
+  },
+  descriptionCompact: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
   section: {
     gap: 12,
+  },
+  sectionTitleCompact: {
+    fontSize: 20,
+    lineHeight: 24,
   },
   stepTitleRow: {
     flexDirection: 'row',
@@ -788,6 +997,14 @@ const styles = StyleSheet.create({
   },
   heroCategoryChipTextSelected: {
     color: '#ffffff',
+  },
+  heroCategoryChipCompact: {
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    minHeight: 46,
+  },
+  heroCategoryChipTextCompact: {
+    fontSize: 13,
   },
   heroCardGrid: {
     flexDirection: 'row',
@@ -837,6 +1054,24 @@ const styles = StyleSheet.create({
   },
   heroCardLabelSelected: {
     color: '#1565c0',
+  },
+  heroCardCompact: {
+    minWidth: 88,
+    paddingHorizontal: 10,
+    paddingVertical: 14,
+    borderRadius: 20,
+    gap: 10,
+  },
+  heroAvatarCircleCompact: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+  },
+  heroAvatarEmojiCompact: {
+    fontSize: 28,
+  },
+  heroCardLabelCompact: {
+    fontSize: 12,
   },
   customCharacterCard: {
     borderWidth: 1.5,
@@ -958,6 +1193,20 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#8a6b45',
   },
+  themeColumnLabelCompact: {
+    fontSize: 11,
+  },
+  themeMainItemCompact: {
+    minHeight: 52,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  themeMainIconCompact: {
+    fontSize: 16,
+  },
+  themeMainTextCompact: {
+    fontSize: 14,
+  },
   themeAdventureList: {
     gap: 10,
   },
@@ -1007,6 +1256,26 @@ const styles = StyleSheet.create({
     lineHeight: 17,
     color: '#7a7385',
   },
+  themeAdventureCardCompact: {
+    padding: 12,
+    paddingRight: 76,
+    minHeight: 78,
+  },
+  themeAdventureIconWrapCompact: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+  },
+  themeAdventureIconCompact: {
+    fontSize: 20,
+  },
+  themeAdventureTitleCompact: {
+    fontSize: 15,
+  },
+  themeAdventureSubtitleCompact: {
+    fontSize: 11,
+    lineHeight: 15,
+  },
   themeSelectedRibbon: {
     position: 'absolute',
     top: 0,
@@ -1041,6 +1310,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: '#3f4b63',
+  },
+  chipCompact: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    minHeight: 40,
+  },
+  chipTextCompact: {
+    fontSize: 13,
   },
   chipTextSelected: {
     color: '#ffffff',
@@ -1119,6 +1396,10 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     color: '#6b7186',
   },
+  helperTextCompact: {
+    fontSize: 10,
+    lineHeight: 16,
+  },
   primaryButton: {
     backgroundColor: '#ffcb3c',
     borderRadius: 36,
@@ -1140,6 +1421,15 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     fontWeight: '500',
     textAlign: 'center',
+  },
+  primaryButtonCompact: {
+    minHeight: 76,
+    maxWidth: 290,
+    borderRadius: 30,
+  },
+  primaryButtonTextCompact: {
+    fontSize: 19,
+    lineHeight: 22,
   },
   primaryButtonDisabled: {
     backgroundColor: '#e9e2c3',
@@ -1165,10 +1455,18 @@ const styles = StyleSheet.create({
   surpriseButton: {
     minWidth: 150,
   },
+  surpriseButtonCompact: {
+    minWidth: 132,
+    paddingHorizontal: 16,
+    paddingVertical: 11,
+  },
   actionStack: {
     alignItems: 'center',
     gap: 10,
     paddingTop: 4,
+  },
+  actionStackCompact: {
+    gap: 8,
   },
   actionHelperText: {
     fontSize: 11,
@@ -1176,6 +1474,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#7a7187',
     maxWidth: 220,
+  },
+  actionHelperTextCompact: {
+    maxWidth: 210,
   },
   storyCard: {
     backgroundColor: '#ffffff',
@@ -1224,6 +1525,10 @@ const styles = StyleSheet.create({
     lineHeight: 27,
     color: '#4b5873',
   },
+  storyTextCompact: {
+    fontSize: 15,
+    lineHeight: 24,
+  },
   storyTitle: {
     fontSize: 20,
     lineHeight: 26,
@@ -1266,51 +1571,182 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '800',
   },
-  bottomNav: {
-    position: 'absolute',
-    left: 10,
-    right: 10,
-    bottom: 10,
+  secondaryButtonTextCompact: {
+    fontSize: 15,
+  },
+  comingSoonShell: {
+    paddingTop: 24,
+    paddingBottom: 8,
+  },
+  comingSoonCard: {
     backgroundColor: '#ffffff',
     borderRadius: 28,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 32,
+    paddingHorizontal: 22,
+    borderWidth: 1,
+    borderColor: '#edf0f4',
+    alignItems: 'center',
+    gap: 12,
+    shadowColor: '#cfd5e1',
+    shadowOpacity: 0.18,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 4,
+  },
+  comingSoonBadge: {
+    backgroundColor: '#eef4ff',
+    color: '#3568d4',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+  },
+  comingSoonTitle: {
+    fontSize: 26,
+    lineHeight: 30,
+    fontWeight: '900',
+    color: '#1f2431',
+    textAlign: 'center',
+  },
+  comingSoonTitleCompact: {
+    fontSize: 23,
+    lineHeight: 27,
+  },
+  comingSoonText: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: '#61697b',
+    textAlign: 'center',
+    maxWidth: 420,
+  },
+  comingSoonButton: {
+    marginTop: 4,
+    backgroundColor: '#ffbf1f',
+    borderRadius: 999,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    minWidth: 150,
+    alignItems: 'center',
+  },
+  comingSoonButtonText: {
+    color: '#5f4300',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  bottomNav: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    bottom: 12,
+    backgroundColor: '#ffffff',
+    borderRadius: 32,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'space-evenly',
     shadowColor: '#98a2b3',
     shadowOpacity: 0.18,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 6 },
     elevation: 8,
   },
+  bottomNavCompact: {
+    left: 8,
+    right: 8,
+    bottom: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 10,
+    borderRadius: 26,
+  },
   bottomNavDesktop: {
     left: '50%',
     right: 'auto',
-    width: 360,
-    marginLeft: -180,
+    width: 620,
+    marginLeft: -310,
+  },
+  bottomNavItemWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 3,
+    minHeight: 54,
+  },
+  bottomNavItemWrapCompact: {
+    gap: 2,
+    minHeight: 48,
+  },
+  bottomNavPrimaryWrap: {
+    flex: 1.15,
   },
   bottomNavItem: {
-    fontSize: 16,
+    fontSize: 18,
     color: '#9ca3af',
     minWidth: 24,
     textAlign: 'center',
   },
+  bottomNavItemCompact: {
+    fontSize: 16,
+  },
+  bottomNavItemActive: {
+    color: '#6f7ea8',
+  },
+  bottomNavItemLabel: {
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+    color: '#9ca3af',
+  },
+  bottomNavItemLabelCompact: {
+    fontSize: 8,
+  },
+  bottomNavItemLabelActive: {
+    color: '#7482a3',
+  },
   bottomNavCenter: {
     backgroundColor: '#ffbf1f',
-    width: 58,
+    minWidth: 74,
     height: 58,
-    borderRadius: 29,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 12,
     marginTop: -24,
-    borderWidth: 5,
+    borderWidth: 4,
     borderColor: '#ffffff',
+    shadowColor: '#b98600',
+    shadowOpacity: 0.32,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 5,
+  },
+  bottomNavCenterCompact: {
+    minWidth: 68,
+    height: 52,
+    borderRadius: 20,
+    marginTop: -22,
+    paddingHorizontal: 10,
+  },
+  bottomNavCenterActive: {
+    backgroundColor: '#ffbf1f',
+  },
+  bottomNavCenterIcon: {
+    fontSize: 12,
+    marginBottom: 2,
+  },
+  bottomNavCenterIconCompact: {
+    fontSize: 11,
   },
   bottomNavCenterText: {
-    fontSize: 8,
+    fontSize: 9,
     fontWeight: '900',
     color: '#ffffff',
-    letterSpacing: 0.7,
+    letterSpacing: 0.8,
+  },
+  bottomNavCenterTextCompact: {
+    fontSize: 8,
   },
 });

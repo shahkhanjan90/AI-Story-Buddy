@@ -54,7 +54,7 @@ export const CHARACTER_CATEGORIES = [
     byAge: {
       '2-4': ['Fairy 🧚', 'Princess 👸'],
       '5-7': ['Wizard 🧙', 'Dragon (friendly) 🐉', 'Superhero 🦸'],
-      '8-10': ['Time Traveler', 'Shadow Ninja', 'Elemental Mage'],
+      '8-10': ['Time Traveler', 'Shadow Ninja', 'Elemental Mage '],
     },
   },
   {
@@ -62,9 +62,9 @@ export const CHARACTER_CATEGORIES = [
     label: 'Everyday Objects',
     emoji: '🏠',
     byAge: {
-      '2-4': ['Talking Teddy 🧸', 'Magic Ball'],
+      '2-4': ['Talking Teddy 🧸', 'Magic Ball '],
       '5-7': ['Talking Pencil ✏️', 'Smart Clock ⏰', 'Magic Backpack 🎒'],
-      '8-10': ['AI Book', 'Invisible Cloak', 'Time Machine'],
+      '8-10': ['AI Book ', 'Invisible Cloak', 'Time Machine'],
     },
   },
 ];

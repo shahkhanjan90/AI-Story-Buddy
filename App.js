@@ -1,1 +1,1 @@
-export { default } from './src/app/StoryBuddyApp';
+export { default } from './src/app/StoryBuddyApp.jsx';
