@@ -72,7 +72,7 @@ export default function StoryBuddyApp() {
   const [selectedThemeCategory, setSelectedThemeCategory] = useState(THEME_CATEGORIES[0].id);
   const [selectedThemeOption, setSelectedThemeOption] = useState(THEME_CATEGORIES[0].options[0]);
   const [selectedTone, setSelectedTone] = useState('bedtime');
-  const [apiBaseUrl, setApiBaseUrl] = useState(DEFAULT_API_BASE_URL);
+  const [apiBaseUrl] = useState(DEFAULT_API_BASE_URL);
   const [storyTitle, setStoryTitle] = useState('');
   const [story, setStory] = useState('');
   const [moral, setMoral] = useState('');
@@ -731,24 +731,6 @@ export default function StoryBuddyApp() {
               );
             })}
           </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, isCompactMobile && styles.sectionTitleCompact]}>
-            Story API URL
-          </Text>
-          <TextInput
-            value={apiBaseUrl}
-            onChangeText={setApiBaseUrl}
-            autoCapitalize="none"
-            autoCorrect={false}
-            placeholder="http://localhost:3000"
-            placeholderTextColor="#8b8197"
-            style={styles.input}
-          />
-          <Text style={styles.helperText}>
-            Use your computer&apos;s IP instead of `localhost` when testing from Expo Go on a phone.
-          </Text>
         </View>
 
         <View style={[styles.actionStack, isCompactMobile && styles.actionStackCompact]}>

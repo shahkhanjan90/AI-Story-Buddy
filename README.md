@@ -31,12 +31,6 @@ The production deployment is hosted on Vercel:
 
 https://ai-story-buddy-tau.vercel.app
 
-The deployed app serves the Expo web build and uses the Vercel API route at:
-
-```text
-POST https://ai-story-buddy-tau.vercel.app/api/generate-story
-```
-
 ## API
 
 The backend exposes:
