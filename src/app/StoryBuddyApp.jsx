@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   Alert,
   ActivityIndicator,
@@ -59,6 +59,9 @@ function getThemeOptionDetails(option) {
 }
 
 export default function StoryBuddyApp() {
+  const scrollViewRef = useRef(null);
+  const storySectionYRef = useRef(0);
+  const pendingStoryScrollRef = useRef(false);
   const { width } = useWindowDimensions();
   const [selectedAge, setSelectedAge] = useState('5-7');
   const [selectedCharacters, setSelectedCharacters] = useState([]);
@@ -119,8 +122,48 @@ export default function StoryBuddyApp() {
     }
   };
 
+  const scrollToStorySection = () => {
+    const runScroll = () => {
+      scrollViewRef.current?.scrollTo({
+        y: Math.max(storySectionYRef.current - 12, 0),
+        animated: true,
+      });
+    };
+
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(runScroll);
+    } else {
+      setTimeout(runScroll, 0);
+    }
+  };
+
+  const requestStorySectionScroll = () => {
+    pendingStoryScrollRef.current = true;
+
+    setTimeout(() => {
+      if (pendingStoryScrollRef.current && storySectionYRef.current > 0) {
+        pendingStoryScrollRef.current = false;
+        scrollToStorySection();
+      }
+    }, 80);
+  };
+
+  const handleStorySectionLayout = (event) => {
+    storySectionYRef.current = event.nativeEvent.layout.y;
+
+    if (pendingStoryScrollRef.current) {
+      pendingStoryScrollRef.current = false;
+      scrollToStorySection();
+    }
+  };
+
   const handleGenerateStory = async () => {
+    if (!canCreateMagic || isLoading) {
+      return;
+    }
+
     setShowResultSection(true);
+    requestStorySectionScroll();
     await generateStory();
   };
 
@@ -199,13 +242,20 @@ export default function StoryBuddyApp() {
   };
 
   const handleSurpriseMe = async () => {
-    setShowResultSection(true);
     const availableCharacters = getCharacterEntriesForAge(selectedAge);
 
     if (availableCharacters.length < 3) {
       Alert.alert('Not enough choices', 'There are not enough predefined characters for this age group.');
       return;
     }
+
+    if (!apiBaseUrl.trim()) {
+      Alert.alert('API URL needed', 'Please enter the Story API base URL.');
+      return;
+    }
+
+    setShowResultSection(true);
+    requestStorySectionScroll();
 
     const shuffledCharacters = [...availableCharacters].sort(() => Math.random() - 0.5);
     const surpriseCharacters = shuffledCharacters.slice(0, 3);
@@ -303,6 +353,7 @@ export default function StoryBuddyApp() {
       </View>
 
       <ScrollView
+        ref={scrollViewRef}
         contentContainerStyle={[
           styles.content,
           {
@@ -742,7 +793,12 @@ export default function StoryBuddyApp() {
         </View>
 
         {showResultSection ? (
-          <View style={styles.storyCard} accessible accessibilityLabel="Generated story section">
+          <View
+            style={styles.storyCard}
+            onLayout={handleStorySectionLayout}
+            accessible
+            accessibilityLabel="Generated story section"
+          >
             <View style={styles.storyHeader}>
               <View>
                 <Text style={styles.storySectionEyebrow}>Your Story</Text>

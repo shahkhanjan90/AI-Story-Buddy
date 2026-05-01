@@ -18,8 +18,23 @@ Expo app UI plus a small Node.js Express API for generating kids stories with Op
 |   |   `-- services
 |   |       `-- storyService.mjs
 |   `-- app
-|       `-- StoryBuddyApp.js
+|       `-- StoryBuddyApp.jsx
+|-- api
+|   `-- generate-story.mjs
+|-- vercel.json
 `-- README.md
+```
+
+## Production
+
+The production deployment is hosted on Vercel:
+
+https://ai-story-buddy-tau.vercel.app
+
+The deployed app serves the Expo web build and uses the Vercel API route at:
+
+```text
+POST https://ai-story-buddy-tau.vercel.app/api/generate-story
 ```
 
 ## API
