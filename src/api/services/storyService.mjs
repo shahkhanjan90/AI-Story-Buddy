@@ -140,8 +140,8 @@ AGE ADAPTATION:
 STRUCTURE:
 - Maximum 3 short paragraphs.
 - Beginning: Introduce characters and setting quickly.
-- Middle: Present a small challenge, problem, or adventure.
-- End: Resolve positively with a satisfying emotional outcome.
+- Middle: Present a small challenge, problem, or adventure. Include playful interactions, emotions, and a small surprise moment. May be introduce a new character or twist.
+- End: Resolve positively with a satisfying emotional or fun or rewarding outcome.
 - Story must clearly reflect the selected characters, theme, and tone.
 
 MORAL:
